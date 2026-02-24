@@ -24,7 +24,20 @@ export async function POST(request: NextRequest) {
 
     // Get user from database
     console.log("[SERVER] Parent Login API: Querying database for user...")
-    const user = await getUserByEmail(email.trim().toLowerCase())
+    
+    let user
+    try {
+      user = await getUserByEmail(email.trim().toLowerCase())
+    } catch (dbError) {
+      console.error("[SERVER] Parent Login API: Database error:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database error occurred. Please try again.",
+        },
+        { status: 500 },
+      )
+    }
 
     if (!user) {
       console.log("[SERVER] Parent Login API: User not found for email:", email)
@@ -65,7 +78,19 @@ export async function POST(request: NextRequest) {
 
     // Verify password
     console.log("[SERVER] Parent Login API: Verifying password...")
-    const isValidPassword = await verifyPassword(password, user.password)
+    let isValidPassword
+    try {
+      isValidPassword = await verifyPassword(password, user.password)
+    } catch (passwordError) {
+      console.error("[SERVER] Parent Login API: Password verification error:", passwordError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "An error occurred during authentication. Please try again.",
+        },
+        { status: 500 },
+      )
+    }
 
     if (!isValidPassword) {
       console.log("[SERVER] Parent Login API: Invalid password for user:", user.email)

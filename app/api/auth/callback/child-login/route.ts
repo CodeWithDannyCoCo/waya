@@ -36,7 +36,20 @@ export async function POST(request: NextRequest) {
 
     // Get child from database and verify PIN
     console.log("[SERVER] Child Login API: Querying database for child...")
-    const child = await getChildByNameAndPin(childName.trim(), pin)
+    
+    let child
+    try {
+      child = await getChildByNameAndPin(childName.trim(), pin)
+    } catch (dbError) {
+      console.error("[SERVER] Child Login API: Database error:", dbError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database error occurred. Please try again.",
+        },
+        { status: 500 },
+      )
+    }
 
     if (!child) {
       console.log("[SERVER] Child Login API: Invalid child name or PIN for:", childName)

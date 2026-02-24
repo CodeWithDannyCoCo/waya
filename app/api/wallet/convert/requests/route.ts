@@ -1,16 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import { getConversionRequests } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const userId = request.headers.get("x-user-id")
+    const userRole = request.headers.get("x-user-role")
 
-    if (!session?.user?.id || session.user.role !== "parent") {
+    if (!userId || userRole !== "parent") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const requests = await getConversionRequests(session.user.id)
+    const requests = await getConversionRequests(userId)
 
     return NextResponse.json({
       requests,

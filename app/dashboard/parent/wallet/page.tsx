@@ -116,11 +116,18 @@ export default function ParentWallet() {
 
   const fetchWalletData = async () => {
     try {
-      const response = await fetch("/api/wallet/balance")
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/balance", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
-        setWalletData(data)
+        setWalletData(data.balance)
       } else {
         console.error("Error fetching wallet data:", data.error)
       }
@@ -131,7 +138,14 @@ export default function ParentWallet() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch("/api/wallet/transactions")
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/transactions", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -148,7 +162,14 @@ export default function ParentWallet() {
 
   const fetchChildrenWallets = async () => {
     try {
-      const response = await fetch("/api/family/children")
+      if (!user) return
+      
+      const response = await fetch("/api/family/children", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -163,7 +184,14 @@ export default function ParentWallet() {
 
   const fetchConversionRequests = async () => {
     try {
-      const response = await fetch("/api/wallet/convert/requests")
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/convert/requests", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -178,7 +206,14 @@ export default function ParentWallet() {
 
   const checkPinStatus = async () => {
     try {
-      const response = await fetch("/api/wallet/pin/status")
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/pin/status", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok && data.hasPin) {

@@ -1,18 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSession } from "@/lib/session"
 
 export async function GET(request: NextRequest) {
   try {
     console.log("[SERVER] Wallet Transactions API: Getting transactions...")
 
-    // Get current user session
-    const session = await getSession()
-    if (!session) {
-      console.log("[SERVER] Wallet Transactions API: Unauthorized access")
+    // Get current user session from request headers
+    const userId = request.headers.get("x-user-id")
+    if (!userId) {
+      console.log("[SERVER] Wallet Transactions API: Unauthorized access - missing auth header")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[SERVER] Wallet Transactions API: Getting transactions for user:", session.id)
+    console.log("[SERVER] Wallet Transactions API: Getting transactions for user:", userId)
 
     // For now, return mock data since transactions table might not be fully set up
     // TODO: Replace with actual database query when transactions table is ready

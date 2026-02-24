@@ -62,7 +62,17 @@ export default function ParentDashboard() {
   const fetchChildren = async () => {
     try {
       setLoadingChildren(true)
-      const response = await fetch("/api/family/children")
+      if (!user) {
+        console.error("No user available for fetch")
+        return
+      }
+      
+      const response = await fetch("/api/family/children", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       if (response.ok) {
         const data = await response.json()
         setChildren(data.children || [])
@@ -93,10 +103,18 @@ export default function ParentDashboard() {
     setError("")
 
     try {
+      if (!user) {
+        setError("User not authenticated")
+        setIsCreating(false)
+        return
+      }
+      
       const response = await fetch("/api/family/children", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-user-id": user.id,
+          "x-user-role": user.role,
         },
         body: JSON.stringify({
           name: childName.trim(),

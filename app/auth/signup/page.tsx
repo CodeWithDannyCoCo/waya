@@ -21,7 +21,7 @@ export default function SignUpPage() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const { user, login, logout } = useAuth()
+  const { user, signInParent, logout } = useAuth()
 
   useEffect(() => {
     console.log("SignUp useEffect - user:", user)
@@ -85,11 +85,18 @@ export default function SignUpPage() {
       }
 
       if (data.success && data.user) {
-        console.log("Signup successful, logging in user:", data.user)
-        login(data.user)
-        router.push("/dashboard/parent")
+        console.log("Signup successful, signing in user:", data.user)
+        // Automatically sign in the newly created parent account
+        const loginResult = await signInParent(email.toLowerCase().trim(), password)
+        if (loginResult.success) {
+          console.log("Auto sign in successful after signup")
+          router.push("/dashboard/parent")
+        } else {
+          setError("Account created but login failed. Please try signing in manually.")
+          setLoading(false)
+        }
       } else {
-        setError("Account created but login failed. Please try signing in.")
+        setError(data.error || "Failed to create account")
         setLoading(false)
       }
     } catch (err) {

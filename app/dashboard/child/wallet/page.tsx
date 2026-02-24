@@ -71,11 +71,18 @@ export default function ChildWallet() {
 
   const fetchWalletData = async () => {
     try {
-      const response = await fetch("/api/wallet/balance")
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/balance", {
+        headers: {
+          "x-user-id": user.id,
+          "x-user-role": user.role,
+        },
+      })
       const data = await response.json()
 
       if (response.ok) {
-        setWalletData(data)
+        setWalletData(data.balance)
       } else {
         console.error("Error fetching wallet data:", data.error)
       }

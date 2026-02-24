@@ -1,23 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { getChildren, createUser } from "@/lib/db"
-import { getSession } from "@/lib/session"
 
 export async function GET(request: NextRequest) {
   try {
     console.log("[SERVER] Family Children API: Getting children...")
 
-    // Get current user session
-    const session = await getSession()
-    if (!session || session.role !== "parent") {
-      console.log("[SERVER] Family Children API: Unauthorized access")
+    // Get session from request headers (passed from client)
+    const authHeader = request.headers.get("x-user-id")
+    const userRole = request.headers.get("x-user-role")
+    
+    if (!authHeader || userRole !== "parent") {
+      console.log("[SERVER] Family Children API: Unauthorized access - missing auth header or not parent")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    
+    const parentId = authHeader
 
-    console.log("[SERVER] Family Children API: Getting children for parent:", session.id)
+    console.log("[SERVER] Family Children API: Getting children for parent:", parentId)
 
     // Get children from database
-    const children = await getChildren(session.id)
+    const children = await getChildren(parentId)
 
     console.log("[SERVER] Family Children API: Found children:", children.length)
 
@@ -54,12 +57,16 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[SERVER] Family Children API: Creating child...")
 
-    // Get current user session
-    const session = await getSession()
-    if (!session || session.role !== "parent") {
-      console.log("[SERVER] Family Children API: Unauthorized access")
+    // Get session from request headers (passed from client)
+    const authHeader = request.headers.get("x-user-id")
+    const userRole = request.headers.get("x-user-role")
+    
+    if (!authHeader || userRole !== "parent") {
+      console.log("[SERVER] Family Children API: Unauthorized access - missing auth header or not parent")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    
+    const parentId = authHeader
 
     const body = await request.json()
     const { name, pin } = body
@@ -88,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if child name already exists for this parent
-    const existingChildren = await getChildren(session.id)
+    const existingChildren = await getChildren(parentId)
     const nameExists = existingChildren.some((child) => child.name.toLowerCase() === name.toLowerCase())
 
     if (nameExists) {
@@ -109,7 +116,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       pin_hash: hashedPin,
       role: "child" as const,
-      parent_id: session.id,
+      parent_id: parentId,
     }
 
     const newChild = await createUser(childData)

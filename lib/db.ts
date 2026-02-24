@@ -454,3 +454,180 @@ export async function verifyPassword(plainPassword: string, hashedPassword: stri
     return false
   }
 }
+
+// Get wallet PIN for a parent user
+export async function getWalletPin(userId: string): Promise<string | null> {
+  try {
+    console.log("[SERVER] DB: Getting wallet PIN for user:", userId)
+    
+    const result = await sql`
+      SELECT wallet_pin FROM users WHERE id = ${userId}
+    `
+    
+    if (result.length === 0) {
+      console.log("[SERVER] DB: User not found")
+      return null
+    }
+    
+    const pinHash = result[0].wallet_pin
+    console.log("[SERVER] DB: Wallet PIN retrieved:", !!pinHash)
+    return pinHash
+  } catch (error) {
+    console.error("[SERVER] DB: Error getting wallet PIN:", error)
+    throw error
+  }
+}
+
+// Set wallet PIN for a parent user
+export async function setWalletPin(userId: string, pinHash: string): Promise<void> {
+  try {
+    console.log("[SERVER] DB: Setting wallet PIN for user:", userId)
+    
+    await sql`
+      UPDATE users SET wallet_pin = ${pinHash} WHERE id = ${userId}
+    `
+    
+    console.log("[SERVER] DB: Wallet PIN set successfully")
+  } catch (error) {
+    console.error("[SERVER] DB: Error setting wallet PIN:", error)
+    throw error
+  }
+}
+
+// Get conversion requests for a parent
+export async function getConversionRequests(parentId: string): Promise<any[]> {
+  try {
+    console.log("[SERVER] DB: Getting conversion requests for parent:", parentId)
+    
+    // For now, return empty array since conversion_requests table might not exist yet
+    // You can uncomment and modify this when you have the conversion_requests table set up
+    return []
+    
+    /*
+    const result = await sql`
+      SELECT 
+        cr.id,
+        cr.child_id,
+        u.name as child_name,
+        cr.amount,
+        cr.status,
+        cr.requested_at
+      FROM conversion_requests cr
+      JOIN users u ON cr.child_id = u.id
+      WHERE u.parent_id = ${parentId}
+      ORDER BY cr.requested_at DESC
+    `
+    
+    console.log("[SERVER] DB: Found conversion requests:", result.length)
+    return result
+    */
+  } catch (error) {
+    console.error("[SERVER] DB: Error getting conversion requests:", error)
+    return []
+  }
+}
+
+// Update wallet balance
+export async function updateWalletBalance(userId: string, amount: number): Promise<number> {
+  try {
+    console.log("[SERVER] DB: Updating wallet balance for user:", userId, "amount:", amount)
+    
+    // For now, return mock balance
+    // You can uncomment and modify this when you have the wallet_balances table set up
+    return 0
+    
+    /*
+    const result = await sql`
+      UPDATE wallet_balances 
+      SET balance = balance + ${amount}
+      WHERE user_id = ${userId}
+      RETURNING balance
+    `
+    
+    const newBalance = result[0]?.balance || 0
+    console.log("[SERVER] DB: New wallet balance:", newBalance)
+    return newBalance
+    */
+  } catch (error) {
+    console.error("[SERVER] DB: Error updating wallet balance:", error)
+    throw error
+  }
+}
+
+// Create transaction record
+export async function createTransaction(transactionData: any): Promise<any> {
+  try {
+    console.log("[SERVER] DB: Creating transaction:", transactionData)
+    
+    // For now, return mock transaction
+    // You can uncomment and modify this when you have the transactions table set up
+    return {
+      id: crypto.randomUUID(),
+      ...transactionData,
+      created_at: new Date(),
+    }
+    
+    /*
+    const result = await sql`
+      INSERT INTO transactions (
+        user_id,
+        type,
+        amount,
+        description,
+        status
+      ) VALUES (
+        ${transactionData.user_id},
+        ${transactionData.type},
+        ${transactionData.amount},
+        ${transactionData.description},
+        ${transactionData.status}
+      )
+      RETURNING *
+    `
+    
+    console.log("[SERVER] DB: Transaction created:", result[0]?.id)
+    return result[0]
+    */
+  } catch (error) {
+    console.error("[SERVER] DB: Error creating transaction:", error)
+    throw error
+  }
+}
+
+// Create notification
+export async function createNotification(notificationData: any): Promise<any> {
+  try {
+    console.log("[SERVER] DB: Creating notification:", notificationData)
+    
+    // For now, return mock notification
+    // You can uncomment and modify this when you have the notifications table set up
+    return {
+      id: crypto.randomUUID(),
+      ...notificationData,
+      created_at: new Date(),
+    }
+    
+    /*
+    const result = await sql`
+      INSERT INTO notifications (
+        user_id,
+        title,
+        message,
+        type
+      ) VALUES (
+        ${notificationData.user_id},
+        ${notificationData.title},
+        ${notificationData.message},
+        ${notificationData.type}
+      )
+      RETURNING *
+    `
+    
+    console.log("[SERVER] DB: Notification created:", result[0]?.id)
+    return result[0]
+    */
+  } catch (error) {
+    console.error("[SERVER] DB: Error creating notification:", error)
+    throw error
+  }
+}

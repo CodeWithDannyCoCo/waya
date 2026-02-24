@@ -365,7 +365,7 @@ export default function ParentWallet() {
 
         toast({
           title: "Wallet Funded",
-          description: `Successfully added ₦${Number.parseFloat(fundingAmount).toLocaleString()} to your wallet!`,
+          description: `Successfully added ₦${(Number.parseFloat(fundingAmount) || 0).toLocaleString()} to your wallet!`,
         })
       } else {
         toast({
@@ -443,7 +443,7 @@ export default function ParentWallet() {
 
         toast({
           title: "Transfer Successful",
-          description: `Successfully sent ₦${amount.toLocaleString()} to ${child.name}!`,
+          description: `Successfully sent ₦${(amount || 0).toLocaleString()} to ${child?.name || "child"}!`,
         })
       } else {
         toast({
@@ -684,7 +684,7 @@ export default function ParentWallet() {
                     <DialogHeader>
                       <DialogTitle>Confirm Funding</DialogTitle>
                       <DialogDescription>
-                        You are about to add ₦{Number.parseFloat(fundingAmount || "0").toLocaleString()} to your family
+                        You are about to add ₦{(Number.parseFloat(fundingAmount || "0") || 0).toLocaleString()} to your family
                         wallet.
                       </DialogDescription>
                     </DialogHeader>
@@ -780,7 +780,7 @@ export default function ParentWallet() {
                       <p className="text-sm text-yellow-800 font-medium mb-2">🔐 Verify Your PIN</p>
                       <p className="text-sm text-yellow-700">
                         Enter your 4-digit PIN to authorize the transfer of ₦
-                        {Number.parseFloat(transferAmount || "0").toLocaleString()} to{" "}
+                        {(Number.parseFloat(transferAmount || "0") || 0).toLocaleString()} to{" "}
                         {childrenWallets.find((c) => c.id === selectedChild)?.name}.
                       </p>
                     </div>
@@ -897,16 +897,16 @@ export default function ParentWallet() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
                       <p className="text-sm text-green-600 font-medium">Balance</p>
-                      <p className="text-xl font-bold text-green-800">₦{child.balance.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-green-800">₦{(child?.balance || 0).toLocaleString()}</p>
                     </div>
                     <div className="text-center p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                       <p className="text-sm text-yellow-600 font-medium">Pending</p>
-                      <p className="text-xl font-bold text-yellow-800">₦{child.pendingConversions.toLocaleString()}</p>
+                      <p className="text-xl font-bold text-yellow-800">₦{(child?.pendingConversions || 0).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-blue-600 font-medium">Total Earned</p>
-                    <p className="text-2xl font-bold text-blue-800">₦{child.totalEarned.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-blue-800">₦{(child?.totalEarned || 0).toLocaleString()}</p>
                   </div>
                   <Button variant="outline" className="w-full bg-transparent">
                     <Eye className="h-4 w-4 mr-2" />

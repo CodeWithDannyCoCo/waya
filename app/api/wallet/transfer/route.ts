@@ -1,14 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
 import bcrypt from "bcryptjs"
 import { updateWalletBalance, createTransaction, createNotification, getWalletPin } from "@/lib/db"
 import { sql } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const userId = request.headers.get("x-user-id")
+    const userRole = request.headers.get("x-user-role")
 
-    if (!session?.user?.id || session.user.role !== "parent") {
+    if (!userId || userRole !== "parent") {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify PIN
-    const storedPinHash = await getWalletPin(session.user.id)
+    const storedPinHash = await getWalletPin(userId)
     if (!storedPinHash) {
       return NextResponse.json({ message: "PIN not set. Please set up your wallet PIN first." }, { status: 400 })
     }
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Check parent balance
     const parentResult = await sql`
-      SELECT wallet_balance FROM user_stats WHERE user_id = ${session.user.id}
+      SELECT wallet_balance FROM user_stats WHERE user_id = ${userId}
     `
     const parentBalance = parentResult[0]?.wallet_balance || 0
 

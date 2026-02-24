@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { getSession } from "@/lib/session"
 import { db } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession()
+    const userId = request.headers.get("x-user-id")
+    const userRole = request.headers.get("x-user-role")
 
-    if (!session || session.role !== "parent") {
+    if (!userId || userRole !== "parent") {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify PIN
-    const walletPin = await db.getWalletPin(session.userId)
+    const walletPin = await db.getWalletPin(userId)
     if (!walletPin || !(await bcrypt.compare(pin, walletPin.pin_hash))) {
       return NextResponse.json({ success: false, error: "Invalid PIN" }, { status: 401 })
     }

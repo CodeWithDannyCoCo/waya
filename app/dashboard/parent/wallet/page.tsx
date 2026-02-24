@@ -253,12 +253,16 @@ export default function ParentWallet() {
     }
 
     try {
+      if (!user) return
+      
       const response = await fetch("/api/wallet/pin/set", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-user-id": user.id,
+          "x-user-role": user.role,
         },
-        body: JSON.stringify({ pin: newPin }),
+        body: JSON.stringify({ pin: newPin, confirmPin: confirmPin }),
       })
 
       const data = await response.json()
@@ -291,12 +295,16 @@ export default function ParentWallet() {
 
   const handlePinVerification = async () => {
     try {
-      const response = await fetch("/api/wallet/pin/verify", {
+      if (!user) return
+      
+      const response = await fetch("/api/wallet/transfer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-user-id": user.id,
+          "x-user-role": user.role,
         },
-        body: JSON.stringify({ pin: pinForTransfer }),
+        body: JSON.stringify({ childId: selectedChild, amount, pin: pinForTransfer }),
       })
 
       const data = await response.json()
@@ -336,10 +344,14 @@ export default function ParentWallet() {
     setIsProcessing("funding")
 
     try {
+      if (!user) return
+      
       const response = await fetch("/api/wallet/fund", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-user-id": user.id,
+          "x-user-role": user.role,
         },
         body: JSON.stringify({ amount: Number.parseFloat(fundingAmount) }),
       })
@@ -573,7 +585,7 @@ export default function ParentWallet() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100 text-sm font-medium">Available Balance</p>
-                <p className="text-3xl font-bold">₦{walletData.balance.toLocaleString()}</p>
+                <p className="text-3xl font-bold">₦{(walletData?.balance || 0).toLocaleString()}</p>
               </div>
               <Wallet className="h-8 w-8 text-green-200" />
             </div>
@@ -585,7 +597,7 @@ export default function ParentWallet() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-blue-100 text-sm font-medium">Total Funded</p>
-                <p className="text-3xl font-bold">₦{walletData.totalFunded.toLocaleString()}</p>
+                <p className="text-3xl font-bold">₦{(walletData?.totalFunded || 0).toLocaleString()}</p>
               </div>
               <CreditCard className="h-8 w-8 text-blue-200" />
             </div>
@@ -597,7 +609,7 @@ export default function ParentWallet() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100 text-sm font-medium">Total Spent</p>
-                <p className="text-3xl font-bold">₦{walletData.totalSpent.toLocaleString()}</p>
+                <p className="text-3xl font-bold">₦{(walletData?.totalSpent || 0).toLocaleString()}</p>
               </div>
               <ArrowUpRight className="h-8 w-8 text-purple-200" />
             </div>
@@ -609,7 +621,7 @@ export default function ParentWallet() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-orange-100 text-sm font-medium">Pending Approvals</p>
-                <p className="text-3xl font-bold">{walletData.pendingApprovals}</p>
+                <p className="text-3xl font-bold">{walletData?.pendingApprovals || 0}</p>
               </div>
               <Clock className="h-8 w-8 text-orange-200" />
             </div>

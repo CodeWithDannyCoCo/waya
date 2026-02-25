@@ -8,10 +8,13 @@ https://api.chorequest.com/v1
 \`\`\`
 
 ## Authentication
-All authenticated endpoints require a Bearer token in the Authorization header:
+Most endpoints require user identification via headers:
 \`\`\`
-Authorization: Bearer <token>
+x-user-id: <user_id>
+x-user-role: parent|child
 \`\`\`
+
+Login endpoints return a user object that can be stored and used for subsequent requests.
 
 ## Common Response Format
 All API responses follow this structure:
@@ -172,8 +175,12 @@ Get the current user's profile
 
 ## Wallet Management Endpoints
 
-### GET /api/wallet/
-Get wallet information for current user
+### GET /api/wallet/balance/
+Get wallet balance for current user
+
+**Headers Required:**
+- `x-user-id`: User ID
+- `x-user-role`: User role (parent|child)
 
 **Request Body:** None
 
@@ -181,26 +188,34 @@ Get wallet information for current user
 \`\`\`json
 {
   "success": true,
-  "data": {
-    "totalBalance": 5000.00,
-    "availableBalance": 4500.00,
-    "pendingBalance": 500.00,
-    "currency": "NGN",
-    "coinBalance": 150,
-    "conversionRate": 5.00
-  },
-  "message": "Wallet information retrieved"
+  "balance": {
+    "coins": 150,
+    "realMoney": 5000.00,
+    "conversionRate": 100
+  }
+}
+\`\`\`
+
+**Error Response (401):**
+\`\`\`json
+{
+  "success": false,
+  "error": "Unauthorized"
 }
 \`\`\`
 
 ### POST /api/wallet/fund/
 Add funds to parent wallet
 
+**Headers Required:**
+- `x-user-id`: User ID
+- `x-user-role`: parent
+
 **Request Body:**
 \`\`\`json
 {
   "amount": 1000.00,
-  "description": "Monthly allowance funding"
+  "paymentMethod": "card"
 }
 \`\`\`
 
@@ -208,27 +223,30 @@ Add funds to parent wallet
 \`\`\`json
 {
   "success": true,
+  "newBalance": 2500.00,
   "transaction": {
     "id": "uuid",
     "amount": 1000.00,
     "type": "funding",
-    "description": "Monthly allowance funding",
-    "created_at": "2024-01-15T10:30:00Z"
-  },
-  "newBalance": 2500.00
+    "status": "completed"
+  }
 }
 \`\`\`
 
 ### POST /api/wallet/transfer/
 Transfer money from parent to child
 
+**Headers Required:**
+- `x-user-id`: Parent user ID
+- `x-user-role`: parent
+
 **Request Body:**
 \`\`\`json
 {
-  "toUserId": "child_uuid",
+  "childId": "child_uuid",
   "amount": 250.00,
-  "description": "Weekly allowance",
-  "pin": "1234"
+  "pin": "1234",
+  "note": "Weekly allowance"
 }
 \`\`\`
 
@@ -239,22 +257,25 @@ Transfer money from parent to child
   "transaction": {
     "id": "uuid",
     "amount": 250.00,
-    "type": "transfer",
-    "description": "Weekly allowance",
-    "created_at": "2024-01-15T10:30:00Z"
+    "type": "transfer"
   },
-  "senderBalance": 1750.00,
-  "receiverBalance": 500.00
+  "parentBalance": 1750.00,
+  "childBalance": 500.00
 }
 \`\`\`
 
 ### POST /api/wallet/pin/set/
 Set wallet PIN for parent
 
+**Headers Required:**
+- `x-user-id`: User ID
+- `x-user-role`: parent
+
 **Request Body:**
 \`\`\`json
 {
-  "pin": "1234"
+  "pin": "1234",
+  "confirmPin": "1234"
 }
 \`\`\`
 
@@ -269,6 +290,10 @@ Set wallet PIN for parent
 ### GET /api/wallet/pin/status/
 Check if user has set a wallet PIN
 
+**Headers Required:**
+- `x-user-id`: User ID
+- `x-user-role`: parent
+
 **Request Body:** None
 
 **Success Response (200):**
@@ -281,12 +306,13 @@ Check if user has set a wallet PIN
 ### GET /api/wallet/transactions/
 Get wallet transaction history
 
+**Headers Required:**
+- `x-user-id`: User ID
+
 **Query Parameters:**
 - `type`: all|funding|transfer|conversion
 - `limit`: number (default: 20)
 - `offset`: number (default: 0)
-- `startDate`: string (ISO date)
-- `endDate`: string (ISO date)
 
 **Request Body:** None
 
@@ -294,31 +320,16 @@ Get wallet transaction history
 \`\`\`json
 {
   "success": true,
-  "data": {
-    "transactions": [
-      {
-        "id": "txn-124",
-        "type": "transfer",
-        "amount": 1000.00,
-        "description": "Transfer to Alex: Weekly allowance",
-        "status": "completed",
-        "fromUser": "John Doe",
-        "toUser": "Alex",
-        "createdAt": "2024-01-15T20:35:00Z"
-      },
-      {
-        "id": "txn-123",
-        "type": "funding",
-        "amount": 10000.00,
-        "description": "Wallet funding via card",
-        "status": "completed",
-        "createdAt": "2024-01-15T20:30:00Z"
-      }
-    ],
-    "total": 25,
-    "hasMore": true
-  },
-  "message": "Transactions retrieved successfully"
+  "transactions": [
+    {
+      "id": "txn-124",
+      "type": "transfer",
+      "amount": 1000.00,
+      "description": "Transfer to Alex",
+      "status": "completed",
+      "createdAt": "2024-01-15T20:35:00Z"
+    }
+  ]
 }
 \`\`\`
 
@@ -373,6 +384,10 @@ Verify wallet PIN
 ### POST /api/wallet/convert/request/
 Request coin to money conversion (child)
 
+**Headers Required:**
+- `x-user-id`: Child user ID
+- `x-user-role`: child
+
 **Request Body:**
 \`\`\`json
 {
@@ -388,28 +403,18 @@ Request coin to money conversion (child)
   "request": {
     "id": "uuid",
     "coinAmount": 50,
-    "moneyAmount": 250.00,
-    "conversionRate": 5.00,
     "status": "pending",
-    "note": "Saving for new toy",
-    "created_at": "2024-01-15T10:30:00Z"
+    "createdAt": "2024-01-15T10:30:00Z"
   }
-}
-\`\`\`
-
-**Error Response (400):**
-\`\`\`json
-{
-  "success": false,
-  "data": null,
-  "message": "Insufficient coins",
-  "errors": ["You need 100 coins but only have 75"],
-  "timestamp": "2024-01-15T10:30:00Z"
 }
 \`\`\`
 
 ### GET /api/wallet/convert/requests/
 Get pending conversion requests (parent)
+
+**Headers Required:**
+- `x-user-id`: Parent user ID
+- `x-user-role`: parent
 
 **Request Body:** None
 
@@ -417,23 +422,16 @@ Get pending conversion requests (parent)
 \`\`\`json
 {
   "success": true,
-  "requests": [
-    {
-      "id": "uuid",
-      "child_name": "Alex Smith",
-      "coinAmount": 50,
-      "moneyAmount": 250.00,
-      "conversionRate": 5.00,
-      "status": "pending",
-      "note": "Saving for new toy",
-      "created_at": "2024-01-15T10:30:00Z"
-    }
-  ]
+  "requests": []
 }
 \`\`\`
 
 ### POST /api/wallet/convert/approve/
 Approve coin conversion request
+
+**Headers Required:**
+- `x-user-id`: Parent user ID
+- `x-user-role`: parent
 
 **Request Body:**
 \`\`\`json
@@ -449,28 +447,7 @@ Approve coin conversion request
 \`\`\`json
 {
   "success": true,
-  "message": "Conversion request approved",
-  "childBalance": 750.00
-}
-\`\`\`
-
-### POST /api/wallet/convert/reject/
-Reject coin conversion request
-
-**Request Body:**
-\`\`\`json
-{
-  "requestId": "uuid",
-  "action": "reject",
-  "reason": "Please complete more chores first"
-}
-\`\`\`
-
-**Success Response (200):**
-\`\`\`json
-{
-  "success": true,
-  "message": "Conversion request rejected"
+  "message": "Conversion request approved"
 }
 \`\`\`
 
@@ -570,6 +547,46 @@ Delete a child account
   "success": true,
   "data": null,
   "message": "Child account deleted successfully"
+}
+\`\`\`
+
+## User Management Endpoints
+
+### GET /api/users/{id}/
+Get user profile by ID
+
+**Headers Required:**
+- `x-user-id`: Current user ID
+
+**URL Parameters:**
+- `id`: User ID to retrieve
+
+**Request Body:** None
+
+**Success Response (200):**
+\`\`\`json
+{
+  "success": true,
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "parent",
+    "coins": 150,
+    "walletBalance": 5000.00,
+    "streak": 7,
+    "level": 3,
+    "xp": 1250,
+    "createdAt": "2024-01-01T00:00:00Z"
+  }
+}
+\`\`\`
+
+**Error Response (404):**
+\`\`\`json
+{
+  "success": false,
+  "error": "User not found"
 }
 \`\`\`
 
@@ -697,6 +714,9 @@ Get activity statistics
 ### GET /api/notifications/
 Get user notifications
 
+**Headers Required:**
+- `x-user-id`: User ID
+
 **Query Parameters:**
 - `limit` (optional): Number of notifications to return (default: 20)
 
@@ -712,16 +732,21 @@ Get user notifications
       "title": "Chore Completed",
       "message": "Alex completed 'Clean your room'",
       "type": "chore_completed",
-      "urgent": true,
       "read": false,
-      "created_at": "2024-01-15T10:30:00Z"
+      "createdAt": "2024-01-15T10:30:00Z"
     }
   ]
 }
 \`\`\`
 
-### PUT /api/notifications/[id]/read/
+### PUT /api/notifications/{id}/read/
 Mark a notification as read
+
+**Headers Required:**
+- `x-user-id`: User ID
+
+**URL Parameters:**
+- `id`: Notification ID
 
 **Request Body:** None
 
@@ -733,8 +758,14 @@ Mark a notification as read
 }
 \`\`\`
 
-### DELETE /api/notifications/[id]/
+### DELETE /api/notifications/{id}/
 Delete a notification
+
+**Headers Required:**
+- `x-user-id`: User ID
+
+**URL Parameters:**
+- `id`: Notification ID
 
 **Request Body:** None
 

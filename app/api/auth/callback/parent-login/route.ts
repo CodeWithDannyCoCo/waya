@@ -5,7 +5,20 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[SERVER] Parent Login API: Starting login process...")
 
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      console.error("[SERVER] Parent Login API: Failed to parse request body:", parseError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid request format",
+        },
+        { status: 400 },
+      )
+    }
+
     const { email, password } = body
 
     console.log("[SERVER] Parent Login API: Received login attempt for:", email)
@@ -134,12 +147,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "An unexpected error occurred. Please try again.",
-      },
-      { status: 500 },
-    )
+    try {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "An unexpected error occurred. Please try again.",
+        },
+        { status: 500 },
+      )
+    } catch (responseError) {
+      console.error("[SERVER] Parent Login API: Failed to send error response:", responseError)
+      // If JSON response fails, return a plain text error response
+      return new NextResponse("Internal Server Error", { status: 500 })
+    }
   }
 }

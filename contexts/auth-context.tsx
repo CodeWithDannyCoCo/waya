@@ -59,6 +59,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
+      console.log("AuthProvider: Response status:", response.status)
+      console.log("AuthProvider: Response content-type:", response.headers.get("content-type"))
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("AuthProvider: Response is not JSON:", contentType)
+        const text = await response.text()
+        console.error("AuthProvider: Response body:", text)
+        return { success: false, error: "Server error occurred. Please try again." }
+      }
+
       const data = await response.json()
       console.log("AuthProvider: Parent sign in response:", data)
 
@@ -88,6 +100,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({ childName, pin }),
       })
+
+      console.log("AuthProvider: Response status:", response.status)
+      console.log("AuthProvider: Response content-type:", response.headers.get("content-type"))
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        console.error("AuthProvider: Response is not JSON:", contentType)
+        const text = await response.text()
+        console.error("AuthProvider: Response body:", text)
+        return { success: false, error: "Server error occurred. Please try again." }
+      }
 
       const data = await response.json()
       console.log("AuthProvider: Child sign in response:", data)

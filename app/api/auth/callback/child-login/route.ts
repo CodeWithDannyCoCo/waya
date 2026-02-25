@@ -5,7 +5,20 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[SERVER] Child Login API: Starting login process...")
 
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (parseError) {
+      console.error("[SERVER] Child Login API: Failed to parse request body:", parseError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid request format",
+        },
+        { status: 400 },
+      )
+    }
+
     const { childName, pin } = body
 
     console.log("[SERVER] Child Login API: Received login attempt for:", childName)

@@ -251,7 +251,18 @@ export async function getChildByNameAndPin(childName: string, pin: string): Prom
       return null
     }
 
-    const isValidPin = await bcrypt.compare(pin, user.pin)
+    console.log("[SERVER] DB: Comparing PIN for user:", user.id)
+    
+    let isValidPin = false
+    try {
+      // Try bcrypt comparison first (if pin is hashed)
+      isValidPin = await bcrypt.compare(pin, user.pin)
+    } catch (compareError) {
+      // If bcrypt fails, try direct comparison (for plain text PINs)
+      console.log("[SERVER] DB: Bcrypt comparison failed, trying plain text comparison")
+      isValidPin = pin === user.pin
+    }
+    
     if (!isValidPin) {
       console.log("[SERVER] DB: Invalid PIN for child")
       return null

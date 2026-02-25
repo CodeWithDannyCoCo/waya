@@ -105,27 +105,34 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   try {
     console.log("[SERVER] DB: Getting user by email:", email)
 
-    const result = await sql`
-      SELECT 
-        u.id,
-        u.name,
-        u.email,
-        u.password,
-        u.pin,
-        u.role,
-        u.parent_id,
-        COALESCE(us.total_coins, 0) as total_coins,
-        COALESCE(us.total_xp, 0) as total_xp,
-        COALESCE(us.level, 1) as level,
-        COALESCE(us.streak_days, 0) as streak_days,
-        u.image,
-        u.created_at,
-        u.updated_at
-      FROM users u
-      LEFT JOIN user_stats us ON u.id = us.user_id
-      WHERE LOWER(u.email) = LOWER(${email})
-      LIMIT 1
-    `
+    let result
+    try {
+      result = await sql`
+        SELECT 
+          u.id,
+          u.name,
+          u.email,
+          u.password,
+          u.pin,
+          u.role,
+          u.parent_id,
+          COALESCE(us.total_coins, 0) as total_coins,
+          COALESCE(us.total_xp, 0) as total_xp,
+          COALESCE(us.level, 1) as level,
+          COALESCE(us.streak_days, 0) as streak_days,
+          u.image,
+          u.created_at,
+          u.updated_at
+        FROM users u
+        LEFT JOIN user_stats us ON u.id = us.user_id
+        WHERE LOWER(u.email) = LOWER(${email})
+        LIMIT 1
+      `
+      console.log("[SERVER] DB: SQL query executed successfully")
+    } catch (sqlError) {
+      console.error("[SERVER] DB: SQL query error:", sqlError)
+      throw sqlError
+    }
 
     if (!result || result.length === 0) {
       console.log("[SERVER] DB: No user found with email:", email)

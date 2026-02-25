@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getUserByEmail, verifyPassword } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
+  // Catch-all wrapper to ensure we ALWAYS return JSON
   try {
     console.log("[SERVER] Parent Login API: Starting login process...")
 
@@ -147,18 +148,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    try {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "An unexpected error occurred. Please try again.",
-        },
-        { status: 500 },
-      )
-    } catch (responseError) {
-      console.error("[SERVER] Parent Login API: Failed to send error response:", responseError)
-      // If JSON response fails, return a plain text error response
-      return new NextResponse("Internal Server Error", { status: 500 })
-    }
+    // Always return JSON, never return plain text
+    return NextResponse.json(
+      {
+        success: false,
+        error: "An unexpected error occurred. Please try again.",
+      },
+      { status: 500 },
+    )
   }
 }
